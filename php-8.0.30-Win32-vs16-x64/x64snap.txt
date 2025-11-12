@@ -1,0 +1,1 @@
+Input Error: Can not find script file "N:\php-sdk\win64build.vc16o3\template\dlls\configure.js".
