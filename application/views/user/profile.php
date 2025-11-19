@@ -377,8 +377,8 @@ $is_pengalaman_visible = (int)($visibility_map[$key_pengalaman] ?? 1);
             <?php endif; ?>
             <?php if (!empty($p['referensi_file'])): ?>
               <div class="mt-1">
-                <a class="small" href="<?= base_url($p['referensi_file']) ?>" target="_blank">
-                  <i class="bi bi-paperclip me-1"></i>Lihat Referensi
+                <a href="<?= base_url('' . h($p['referensi_file'])) ?>" target="_blank" class="link-primary">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i>Lihat Referensi
                 </a>
               </div>
             <?php endif; ?>
@@ -456,8 +456,8 @@ $is_pendidikan_visible = (int)($visibility_map[$key_pendidikan] ?? 1);
             <div class="small muted"><?= h($r['institusi'] ?? '—') ?> · Lulus: <?= h($r['tahun_lulus'] ?? '—') ?></div>
             <?php if (!empty($r['ijazah_file'])): ?>
               <div class="mt-1">
-                <a class="small" href="<?= base_url($r['ijazah_file']) ?>" target="_blank">
-                  <i class="bi bi-paperclip me-1"></i>Lihat Ijazah
+                <a href="<?= base_url('' . h($r['ijazah_file'])) ?>" target="_blank" class="link-primary">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Lihat Ijazah
                 </a>
               </div>
             <?php endif; ?>
@@ -540,7 +540,7 @@ $is_sertifikasi_visible = (int)($visibility_map[$key_sertifikasi] ?? 1);
                     
                     <?php if (!empty($s['file_sertifikat'])): ?>
                         <div class="small mt-1">
-                            <a href="<?= base_url('uploads/sertifikat/' . h($s['file_sertifikat'])) ?>" target="_blank" class="link-primary">
+                            <a href="<?= base_url('' . h($s['file_sertifikat'])) ?>" target="_blank" class="link-primary">
                                 <i class="bi bi-file-earmark-arrow-down me-1"></i>Lihat Sertifikat
                             </a>
                         </div>
@@ -630,7 +630,7 @@ $is_pelatihan_visible = (int)($visibility_map[$key_pelatihan] ?? 1);
             <!-- Link ke Sertifikat (menggunakan 'sertifikat_file') -->
             <?php if (!empty($p['sertifikat_file'])): ?>
                 <div class="small mt-1">
-                    <a href="<?= base_url('uploads/sertifikat/' . h($p['sertifikat_file'])) ?>" target="_blank" class="link-primary">
+                    <a href="<?= base_url('' . h($p['sertifikat_file'])) ?>" target="_blank" class="link-primary">
                         <i class="bi bi-file-earmark-arrow-down me-1"></i>Lihat Sertifikat
                     </a>
                 </div>
@@ -787,7 +787,7 @@ $lampiran_data = $lampiran ?? [];
           $file_value = $lampiran_data[$field_name] ?? null;
           $file_exists = !empty($file_value);
           // PASTIKAN PATH INI BENAR: 'uploads/cv/'
-          $file_url = $file_exists ? base_url('uploads/cv/' . $file_value) : '#'; 
+          $file_url = $file_exists ? base_url('' . $file_value) : '#'; 
         ?>
         <div class="list-group-item d-flex justify-content-between align-items-center px-0">
           <div class="item-content"> 

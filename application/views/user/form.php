@@ -178,6 +178,10 @@ function v($arr, $key, $default=''){ return isset($arr[$key]) ? htmlspecialchars
                       <div class="col-md-3">
                         <label>Ijazah (pdf/jpg/png)</label>
                         <input type="file" name="ijazah_file[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        <?php if (!empty($r['ijazah_file'])): ?>
+                          <div class="hint-file mt-1">File lama: **<?= htmlspecialchars(basename($r['ijazah_file'])) ?>**</div>
+                          <input type="hidden" name="ijazah_file_old[]" value="<?= v($r, 'ijazah_file') ?>">
+                        <?php endif; ?>
                       </div>
                     </div>
                     <?php if ($__i !== $__last): ?><hr class="item-sep"><?php endif; ?>
@@ -202,6 +206,10 @@ function v($arr, $key, $default=''){ return isset($arr[$key]) ? htmlspecialchars
                       <div class="col-md-3">
                         <label>Ijazah (pdf/jpg/png)</label>
                         <input type="file" name="ijazah_file[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        <?php if (!empty($r['ijazah_file'])): ?>
+                          <div class="hint-file mt-1">File lama: **<?= htmlspecialchars(basename($r['ijazah_file'])) ?>**</div>
+                          <input type="hidden" name="ijazah_file_old[]" value="<?= v($r, 'ijazah_file') ?>">
+                        <?php endif; ?>
                       </div>
                     </div>
                   <?php endif; ?>
@@ -230,6 +238,10 @@ function v($arr, $key, $default=''){ return isset($arr[$key]) ? htmlspecialchars
                       <div class="col-md-3">
                         <label>Sertifikat (pdf/jpg/png)</label>
                         <input type="file" name="sertifikat_file[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        <?php if (!empty($r['sertifikat_file'])): ?>
+                          <div class="hint-file mt-1">File lama: **<?= htmlspecialchars(basename($r['sertifikat_file'])) ?>**</div>
+                          <input type="hidden" name="sertifikat_file_old[]" value="<?= v($r, 'sertifikat_file') ?>">
+                        <?php endif; ?>
                       </div>
                     </div>
                     <?php if ($__i !== $__last): ?><hr class="item-sep"><?php endif; ?>
@@ -308,7 +320,8 @@ function v($arr, $key, $default=''){ return isset($arr[$key]) ? htmlspecialchars
                         <label>Referensi (pdf/jpg/png)</label>
                         <input type="file" name="referensi_file[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                         <?php if (!empty($r['referensi_file'])): ?>
-                          <div class="hint-file mt-1">File lama: <?= htmlspecialchars(basename($r['referensi_file'])) ?></div>
+                          <div class="hint-file mt-1">File lama: **<?= htmlspecialchars(basename($r['referensi_file'])) ?>**</div>
+                          <input type="hidden" name="referensi_file_old[]" value="<?= v($r, 'referensi_file') ?>">
                         <?php endif; ?>
                       </div>
                     </div>
@@ -401,24 +414,54 @@ function v($arr, $key, $default=''){ return isset($arr[$key]) ? htmlspecialchars
 
               <!-- Sertifikasi -->
               <div class="tab-pane fade" id="sertifikasi" role="tabpanel">
-                <div id="sertifikasi-wrapper">
-                  <?php if (!empty($sertifikasi_profesi)):
-                        $__last = count($sertifikasi_profesi)-1;
-                        foreach ($sertifikasi_profesi as $__i => $r): ?>
-                    <div class="row mb-3 repeat-row">
-                      <div class="col-md-4"><label class="req">Nama Sertifikat</label><input type="text" name="sertifikasi_nama[]" class="form-control" required value="<?= v($r,'nama') ?>"></div>
-                      <div class="col-md-4"><label class="req">Penerbit</label><input type="text" name="sertifikasi_penerbit[]" class="form-control" required value="<?= v($r,'penerbit') ?>"></div>
-                      <div class="col-md-4"><label class="req">Tahun</label><input type="text" name="sertifikasi_tahun[]" class="form-control" required value="<?= v($r,'tahun') ?>"></div>
-                    </div>
-                    <?php if ($__i !== $__last): ?><hr class="item-sep"><?php endif; ?>
-                  <?php endforeach; else: ?>
-                    <div class="row mb-3 repeat-row">
-                      <div class="col-md-4"><label class="req">Nama Sertifikat</label><input type="text" name="sertifikasi_nama[]" class="form-control" required placeholder="Nama Sertifikat"></div>
-                      <div class="col-md-4"><label class="req">Penerbit</label><input type="text" name="sertifikasi_penerbit[]" class="form-control" required placeholder="Penerbit"></div>
-                      <div class="col-md-4"><label class="req">Tahun</label><input type="text" name="sertifikasi_tahun[]" class="form-control" required placeholder="Tahun"></div>
-                    </div>
-                  <?php endif; ?>
-                </div>
+                  <div id="sertifikasi-wrapper">
+                      <?php if (!empty($sertifikasi_profesi)):
+                          $__last = count($sertifikasi_profesi)-1;
+                          foreach ($sertifikasi_profesi as $__i => $r): ?>
+                          <div class="row mb-3 repeat-row">
+                              <div class="col-md-3">
+                                  <label class="req">Nama Sertifikat</label>
+                                  <input type="text" name="sertifikasi_nama[]" class="form-control" required value="<?= v($r,'nama') ?>">
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="req">Penerbit</label>
+                                  <input type="text" name="sertifikasi_penerbit[]" class="form-control" required value="<?= v($r,'penerbit') ?>">
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="req">Tahun</label>
+                                  <input type="text" name="sertifikasi_tahun[]" class="form-control" required value="<?= v($r,'tahun') ?>">
+                              </div>
+                              <div class="col-md-3">
+                                  <label>Sertifikat (pdf/jpg/png)</label>
+                                  <input type="file" name="file_sertifikat[]" class="form-control">
+                                  <?php if (v($r, 'file_sertifikat')): ?> 
+                                      <div class="hint-file mt-1">File saat ini: **<?= v($r, 'file_sertifikat') ?>**</div>
+                                      <input type="hidden" name="sertifikasi_file_old[]" value="<?= v($r, 'file_sertifikat') ?>">
+                                  <?php endif; ?>
+                              </div>
+                          </div>
+                          <?php if ($__i !== $__last): ?><hr class="item-sep"><?php endif; ?>
+                      <?php endforeach; else: ?>
+                          <div class="row mb-3 repeat-row">
+                              <div class="col-md-3">
+                                  <label class="req">Nama Sertifikat</label>
+                                  <input type="text" name="sertifikasi_nama[]" class="form-control" required placeholder="Nama Sertifikat">
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="req">Penerbit</label>
+                                  <input type="text" name="sertifikasi_penerbit[]" class="form-control" required placeholder="Penerbit">
+                              </div>
+                              <div class="col-md-3">
+                                  <label class="req">Tahun</label>
+                                  <input type="text" name="sertifikasi_tahun[]" class="form-control" required placeholder="Tahun">
+                              </div>
+                              <div class="col-md-3">
+                                  <label>Sertifikat (pdf/jpg/png)</label>
+                                  <input type="file" name="file_sertifikat[]" class="form-control">
+                              </div>
+                          </div>
+                      <?php endif; ?>
+                  </div>
               </div>
 
               <!-- Lampiran -->
@@ -566,9 +609,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== Sertifikasi (INI PENTING)
   const sertifikasiHTML = `
-    <div class="col-md-4"><label class="req">Nama Sertifikat</label><input type="text" name="sertifikasi_nama[]" class="form-control" required placeholder="Nama Sertifikat"></div>
-    <div class="col-md-4"><label class="req">Penerbit</label><input type="text" name="sertifikasi_penerbit[]" class="form-control" required placeholder="Penerbit"></div>
-    <div class="col-md-4"><label class="req">Tahun</label><input type="text" name="sertifikasi_tahun[]" class="form-control" required placeholder="Tahun"></div>
+    <div class="col-md-3"><label class="req">Nama Sertifikat</label><input type="text" name="sertifikasi_nama[]" class="form-control" required placeholder="Nama Sertifikat"></div>
+    <div class="col-md-3"><label class="req">Penerbit</label><input type="text" name="sertifikasi_penerbit[]" class="form-control" required placeholder="Penerbit"></div>
+    <div class="col-md-3"><label class="req">Tahun</label><input type="text" name="sertifikasi_tahun[]" class="form-control" required placeholder="Tahun"></div>
+    <div class="col-md-3"><label>Sertifikat (pdf/jpg/png)</label><input type="file" name="sertifikasi_file[]" class="form-control"></div>
   `;
   const sertifikasiWrap = document.getElementById('sertifikasi-wrapper');
   if (sertifikasiWrap) {

@@ -573,7 +573,7 @@ class User extends MY_Controller
         }
     }
 
-     public function export_apbn()
+    public function export_apbn()
     {
         $user_id = $this->session->userdata('id');
 
@@ -630,19 +630,68 @@ class User extends MY_Controller
         $user_id = $this->session->userdata('id');
         $data = $this->Cv_model->getCvData($user_id);
 
+        // 1. Load HTML (Pastikan 'Halaman {PAGENO}...' SUDAH DIHAPUS dari file view ini)
         $html = $this->load->view('user/export_apbn', $data, true);
 
         $options = new Options();
         $options->set('defaultFont', 'verdana');
         $options->set('isRemoteEnabled', true);
-        $options->set('isHtml5ParserEnabled', true); // ✅ ini dia
-        $options->set('isPhpEnabled', true);         // ✅ ini juga
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
-      
+        
+        // 2. Render PDF (PENTING: JANGAN ubah baris ini)
         $dompdf->render();
+
+        // 3. === MULAI KODE TAMBAHAN UNTUK NOMOR HALAMAN ===
+        // ------------------------------------------------
+        
+        // Ambil canvas (halaman) PDF
+        $canvas = $dompdf->get_canvas();
+        
+        // Dapatkan FONT OBJECT yang akan kita gunakan
+        $font = $dompdf->getFontMetrics()->get_font("verdana", "normal");
+        
+        // Tentukan FONT SIZE yang akan kita gunakan
+        $font_size = 8; // 8pt
+        
+        // Skrip untuk menggambar nomor halaman di SETIAP halaman
+        // ---- PERBAIKAN ADA DI SINI ----
+        $canvas->page_script(
+            
+            // 1. Tanda tangan fungsi (signature) harus menerima 4 argumen ini
+            function ($pageNo, $totalPages, $canvas, $fontMetrics) use ($font, $font_size) {
+                // 2. Kita 'use' $font (objek font) dan $font_size (angka) dari luar
+                
+                // Teks yang akan ditampilkan
+                $text = "Halaman " . $pageNo . " dari " . $totalPages;
+                
+                // Hitung lebar teks agar bisa rata kanan
+                // Sekarang $font adalah FONT OBJECT yang benar (dari 'use')
+                $text_width = $canvas->get_text_width($text, $font, $font_size);
+                
+                // Dapatkan dimensi halaman
+                $page_width = $canvas->get_width();
+                $page_height = $canvas->get_height();
+                
+                // --- Tentukan Posisi ---
+                $x = $page_width - $text_width - 28.34; // 1cm (28.34pt) dari tepi kanan
+                $y = $page_height - 37.17; // Posisi Y dari bawah (sudah dihitung)
+                
+                // Gambar teks di canvas
+                // Sekarang $font adalah FONT OBJECT yang benar (dari 'use')
+                $canvas->text($x, $y, $text, $font, $font_size, [0, 0, 0]); // [0,0,0] = hitam
+            }
+            // 3. Kita tidak perlu passing $font sebagai argumen di sini lagi
+        );
+        
+        // ------------------------------------------------
+        // === SELESAI KODE TAMBAHAN ===
+        
+        // 4. Tampilkan ke browser
         $dompdf->stream('CV_APBN.pdf', ['Attachment' => false]);
     }
 
@@ -652,7 +701,7 @@ class User extends MY_Controller
         $this->load->library('Translator_free'); 
 
         $user_id = $this->session->userdata('id');
-        $data    = $this->Cv_model->getCvData($user_id); // sekarang sudah termasuk pelatihan & sertifikasi
+        $data    = $this->Cv_model->getCvData($user_id); 
 
         // --- AUTO TRANSLATE (gratis) ---
         if ($lang === 'en') {
@@ -738,19 +787,21 @@ class User extends MY_Controller
                 unset($er);
             }
 
-            
-
             $data['__lang'] = 'en';
         } else {
             $data['__lang'] = 'id';
         }
 
         // --- Render view ---
+        // 1. Load view yang sudah kita edit (export_wb.php)
         $html = $this->load->view('user/export_wb', $data, true);
 
         // --- Dompdf setup ---
         $options = new Options();
-        $options->set('defaultFont', 'DejaVu Sans');
+        
+        // PERUBAHAN DI SINI: Samakan font dengan APBN
+        $options->set('defaultFont', 'verdana'); 
+        
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isPhpEnabled', true);
@@ -758,7 +809,49 @@ class User extends MY_Controller
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
+        
+        // 2. Render PDF
         $dompdf->render();
+
+
+        // 3. === BLOK KODE NOMOR HALAMAN YANG DIUBAH ===
+        // ------------------------------------------------
+        $canvas = $dompdf->get_canvas();
+        
+        // Pastikan font "verdana" (sesuai defaultFont di atas)
+        $font = $dompdf->getFontMetrics()->get_font("verdana", "normal");
+        $font_size = 8; // 8pt
+
+        $canvas->page_script(
+            
+            function ($pageNo, $totalPages, $canvas, $fontMetrics) use ($font, $font_size, $lang) {
+                
+                // Cek bahasa dan atur teks yang sesuai
+                if ($lang === 'en') {
+                    $text = "Page " . $pageNo . " of " . $totalPages;
+                } else {
+                    $text = "Halaman " . $pageNo . " dari " . $totalPages;
+                }
+                
+                $text_width = $canvas->get_text_width($text, $font, $font_size);
+                
+                $page_width = $canvas->get_width();
+                $page_height = $canvas->get_height();
+                
+                // Posisi X (1cm dari kanan, disesuaikan dengan lebar teks)
+                $x = $page_width - $text_width - 28.34; 
+                
+                // Posisi Y (dihitung dari bawah agar pas di atas footer)
+                $y = $page_height - 37.17; 
+                
+                $canvas->text($x, $y, $text, $font, $font_size, [0, 0, 0]); // [0,0,0] = hitam
+            }
+        );
+        // ------------------------------------------------
+        // === SELESAI BLOK KODE ===
+
+
+        // 4. Tampilkan PDF ke browser
         $dompdf->stream('CV_WB_'.$lang.'.pdf', ['Attachment' => false]);
     }
 
@@ -915,7 +1008,7 @@ class User extends MY_Controller
         }
         
         $id        = (int)$this->input->post('id');
-        $file_lama = $this->input->post('file_lama'); // Ambil nama file lama
+        $file_lama = $this->input->post('file_lama'); // Ambil path/nama file lama
         
         // Ambil nilai toggle
         $isVisible = (int)$this->input->post('is_visible');
@@ -925,12 +1018,18 @@ class User extends MY_Controller
             'nama'       => $this->input->post('nama', true),
             'penerbit'   => $this->input->post('penerbit', true),
             'tahun'      => $this->input->post('tahun', true),
-            'is_visible' => $isVisible, // ← Tambahkan ini
+            'is_visible' => $isVisible,
         ];
 
-//         // --- LOGIKA UPLOAD FILE (Salin dari nonformal_save) ---
-//         // Path 'uploads/sertifikat/' digunakan bersama
-        $upload_path = FCPATH . 'uploads/sertifikat/';
+        // --- LOGIKA UPLOAD FILE (Disinkronkan dengan path CV) ---
+        $user_id = $this->session->userdata('id'); // Menggunakan 'id' untuk konsistensi
+        $user_folder = 'user_' . $user_id;
+
+        // Tentukan ABSOLUTE path untuk upload
+        $upload_path = FCPATH . 'uploads/cv/' . $user_folder . '/'; 
+        // Tentukan RELATIVE path untuk disimpan di DB
+        $path_prefix = 'uploads/cv/' . $user_folder . '/'; 
+
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0777, TRUE);
         }
@@ -939,27 +1038,32 @@ class User extends MY_Controller
         $config['max_size']      = 2048; // 2MB
         $config['encrypt_name']  = TRUE;
 
-       $this->load->library('upload', $config);
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config); // Re-initialize diperlukan jika library sudah pernah dimuat
 
         if (!empty($_FILES['file_sertifikat']['name'])) {
             if ($this->upload->do_upload('file_sertifikat')) {
                 $upload_data = $this->upload->data();
-                $row['file_sertifikat'] = $upload_data['file_name'];
-                if ($id && !empty($file_lama) && file_exists($upload_path . $file_lama)) {
-                    unlink($upload_path . $file_lama);
+                // SIMPAN PATH RELATIF PENUH KE DB
+                $row['file_sertifikat'] = $path_prefix . $upload_data['file_name'];
+                
+                // Hapus file lama jika ada (menggunakan path penuh yang disimpan di DB)
+                if ($id && !empty($file_lama) && file_exists(FCPATH . $file_lama)) {
+                    unlink(FCPATH . $file_lama);
                 }
             } else {
                 $error = $this->upload->display_errors('', '');
-                $this->session->set_flashdata('error', 'Upload file gagal: ' . $error);
-                redirect('user/profile#pelatihan');
+                $this->session->set_flashdata('error', 'Upload Sertifikasi gagal: ' . $error);
+                redirect('user/profile#sertifikasi'); // Arahkan ke section yang benar
                 return;
             }
         } else {
             if ($id) {
-                 $row['file_sertifikat'] = $file_lama;
+                // Pertahankan file lama (yang harusnya sudah path penuh)
+                $row['file_sertifikat'] = $file_lama;
             }
         }
-//         // --- END LOGIKA UPLOAD FILE ---
+        // --- END LOGIKA UPLOAD FILE ---
 
         if ($id) {
             $this->db->where(['id' => $id, 'cv_id' => $cv_id])->update('sertifikasi_profesi', $row);
@@ -985,9 +1089,8 @@ class User extends MY_Controller
         }
 
         $id        = (int)$this->input->post('id');
-        $file_lama = $this->input->post('file_lama'); // Ambil nama file lama
+        $file_lama = $this->input->post('file_lama'); // Ambil path/nama file lama
         
-        // Ambil nilai toggle
         $isVisible = (int)$this->input->post('is_visible');
 
         $row = [
@@ -995,11 +1098,18 @@ class User extends MY_Controller
             'nama_pelatihan' => $this->input->post('nama_pelatihan', true),
             'penyelenggara'  => $this->input->post('penyelenggara', true),
             'tahun'          => $this->input->post('tahun', true),
-            'is_visible' => $isVisible, // <-- Data visibilitas
+            'is_visible'     => $isVisible,
         ];
 
-        // --- LOGIKA UPLOAD FILE ---
-        $upload_path = FCPATH . 'uploads/sertifikat/';
+        // --- LOGIKA UPLOAD FILE (Disinkronkan dengan path CV) ---
+        $user_id = $this->session->userdata('id');
+        $user_folder = 'user_' . $user_id;
+        
+        // Tentukan ABSOLUTE path untuk upload
+        $upload_path = FCPATH . 'uploads/cv/' . $user_folder . '/'; // <--- Path Konsisten
+        // Tentukan RELATIVE path untuk disimpan di DB
+        $path_prefix = 'uploads/cv/' . $user_folder . '/'; 
+
         if (!is_dir($upload_path)) {
             mkdir($upload_path, 0777, TRUE);
         }
@@ -1010,23 +1120,27 @@ class User extends MY_Controller
         $config['encrypt_name']  = TRUE;
 
         $this->load->library('upload', $config);
+        $this->upload->initialize($config); // Re-initialize
 
         if (!empty($_FILES['sertifikat_file']['name'])) {
             if ($this->upload->do_upload('sertifikat_file')) {
                 $upload_data = $this->upload->data();
-                $row['sertifikat_file'] = $upload_data['file_name'];
-                if ($id && !empty($file_lama) && file_exists($upload_path . $file_lama)) {
-                    unlink($upload_path . $file_lama);
+                // SIMPAN PATH RELATIF PENUH KE DB
+                $row['sertifikat_file'] = $path_prefix . $upload_data['file_name'];
+                
+                // Hapus file lama jika ada (menggunakan path penuh yang disimpan di DB)
+                if ($id && !empty($file_lama) && file_exists(FCPATH . $file_lama)) {
+                    unlink(FCPATH . $file_lama);
                 }
             } else {
                 $error = $this->upload->display_errors('', '');
-                $this->session->set_flashdata('error', 'Upload file gagal: ' . $error);
+                $this->session->set_flashdata('error', 'Upload Pelatihan gagal: ' . $error);
                 redirect('user/profile#pelatihan');
                 return;
             }
         } else {
             if ($id) {
-                 $row['sertifikat_file'] = $file_lama;
+                $row['sertifikat_file'] = $file_lama;
             }
         }
         // --- END LOGIKA UPLOAD FILE ---
@@ -1114,10 +1228,9 @@ class User extends MY_Controller
             return;
         }
 
-        $field_name = $this->input->post('field_name', true); // 'ktp_file', 'npwp_file', etc.
-        $file_lama  = $this->input->post('file_lama', true);
+        $field_name = $this->input->post('field_name', true);
+        $file_lama  = $this->input->post('file_lama', true); // Path penuh lama
 
-        // Whitelist field agar aman
         $allowed_fields = ['ktp_file', 'npwp_file', 'bukti_pajak', 'foto', 'lainnya'];
         if (!$field_name || !in_array($field_name, $allowed_fields)) {
             $this->session->set_flashdata('error', 'Field lampiran tidak valid.');
@@ -1125,9 +1238,15 @@ class User extends MY_Controller
             return;
         }
 
-        // --- Logika Upload File ---
-        // PASTIKAN PATH INI BENAR: 'uploads/cv/'
-        $upload_path = FCPATH . 'uploads/cv/'; 
+        // --- Logika Upload File (Disinkronkan dengan path CV) ---
+        $user_id = $this->session->userdata('id');
+        $user_folder = 'user_' . $user_id;
+
+        // Tentukan ABSOLUTE path untuk upload
+        $upload_path = FCPATH . 'uploads/cv/' . $user_folder . '/'; // <--- Path Konsisten
+        // Tentukan RELATIVE path untuk disimpan di DB
+        $path_prefix = 'uploads/cv/' . $user_folder . '/'; 
+
         if (!is_dir($upload_path)) {
             @mkdir($upload_path, 0777, TRUE);
         }
@@ -1138,20 +1257,21 @@ class User extends MY_Controller
         $config['encrypt_name']  = TRUE;
 
         $this->load->library('upload', $config);
+        $this->upload->initialize($config); // Re-initialize
 
         $new_file_name = null;
 
         if (!empty($_FILES['file_lampiran']['name'])) {
             if ($this->upload->do_upload('file_lampiran')) {
                 $upload_data   = $this->upload->data();
-                $new_file_name = $upload_data['file_name']; // File baru berhasil di-upload
+                // SIMPAN PATH RELATIF PENUH KE DB
+                $new_file_name = $path_prefix . $upload_data['file_name']; 
 
-                // Hapus file lama jika ada
-                if (!empty($file_lama) && file_exists($upload_path . $file_lama)) {
-                    @unlink($upload_path . $file_lama);
+                // Hapus file lama jika ada (menggunakan path penuh yang disimpan di DB)
+                if (!empty($file_lama) && file_exists(FCPATH . $file_lama)) {
+                    @unlink(FCPATH . $file_lama);
                 }
             } else {
-                // Upload gagal
                 $error = $this->upload->display_errors('', '');
                 $this->session->set_flashdata('error', 'Upload ' . $field_name . ' gagal: ' . $error);
                 redirect('user/profile#lampiran');
@@ -1163,16 +1283,13 @@ class User extends MY_Controller
         }
 
         // --- Update Database ---
-        // Cek dulu apakah baris lampiran_cv sudah ada
         $lampiran_row = $this->db->get_where('lampiran_cv', ['cv_id' => $cv_id])->row();
 
         $payload = [$field_name => $new_file_name];
 
         if ($lampiran_row) {
-            // Update
             $this->db->where('cv_id', $cv_id)->update('lampiran_cv', $payload);
         } else {
-            // Insert (seharusnya sudah ada jika user pernah ke user/form)
             $payload['cv_id'] = $cv_id;
             $this->db->insert('lampiran_cv', $payload);
         }
@@ -1180,7 +1297,6 @@ class User extends MY_Controller
         $this->session->set_flashdata('success', 'Lampiran ' . $field_name . ' diperbarui.');
         redirect('user/profile#lampiran');
     }
-
 
     /* ====================== HELPERS ====================== */
     private function getByUser($user_id)
