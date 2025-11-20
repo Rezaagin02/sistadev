@@ -680,9 +680,12 @@ $is_pelatihan_visible = (int)($visibility_map[$key_pelatihan] ?? 1);
 <!-- BAGIAN KEAHLIAN & BAHASA -->
 <!-- ============================== -->
 <?php
-$key_bahasa = 'bahasa';
-$is_bahasa_visible = (int)($visibility_map[$key_bahasa] ?? 1);
+// 1. Definisikan Key sesuai database 'user_visibility'
+$key_bahasa = 'bahasa'; 
+// 2. Ambil status visibilitas (Default 1/Show jika tidak ada setting)
+$is_bahasa_visible = (int)($visibility_map[$key_bahasa] ?? 1); 
 ?>
+
 <div class="card card-lite mb-3">
   <div class="card-header bg-white d-flex justify-content-between align-items-center">
     <div><i class="bi bi-translate me-2"></i>Keahlian & Bahasa</div>
@@ -690,15 +693,22 @@ $is_bahasa_visible = (int)($visibility_map[$key_bahasa] ?? 1);
     <div class="d-flex align-items-center">
       <button class="btn btn-sm btn-outline-secondary toggle-section me-2" 
               data-target="#bahasa-content"
-              data-storage-key="bahasa"> <i class="bi bi-eye-slash me-1"></i> Sembunyikan
+              data-storage-key="<?= $key_bahasa ?>"
+              data-visible-state="<?= $is_bahasa_visible ?>">
+          <?php if ($is_bahasa_visible): ?>
+              <i class="bi bi-eye-slash me-1"></i> Sembunyikan
+          <?php else: ?>
+              <i class="bi bi-eye me-1"></i> Tampilkan
+          <?php endif; ?>
       </button>
+      
       <a href="#" class="link-muted small" data-bs-toggle="modal" data-bs-target="#modalBahasa" data-mode="add">
         <i class="bi bi-plus-circle me-1"></i>Tambah
       </a>
     </div>
   </div>
 
-  <div id="bahasa-content" class="profile-section card-body">
+  <div id="bahasa-content" class="profile-section card-body <?= (!$is_bahasa_visible) ? 'd-none' : '' ?>">
   <?php if (!empty($bahasa_list)): ?>
     <div class="list-group list-group-flush">
       <?php foreach ($bahasa_list as $b): ?>

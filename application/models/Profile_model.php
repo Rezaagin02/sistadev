@@ -147,7 +147,7 @@ class Profile_model extends CI_Model
     
 
     // view profile
-    public function get_profile_for_viewer(int $profile_user_id, int $viewer_user_id = 0)
+    public function get_profile_for_viewer(int $profile_user_id, int $viewer_user_id = 0, bool $is_admin = false)
     {
         $is_owner = ($profile_user_id === (int)$viewer_user_id);
 
@@ -162,7 +162,8 @@ class Profile_model extends CI_Model
         $cv_ids = array_map(function($r){ return (int)$r['id']; }, $cv_ids);
 
         // helper: get section rows safely (with optional filter)
-        $get_section = function($table, $where_add = []) use ($cv_ids, $is_owner, $latest_cv) {
+        // PERUBAHAN: Tambahkan 'use ($is_admin)'
+        $get_section = function($table, $where_add = []) use ($cv_ids, $is_owner, $latest_cv, $is_admin) {
             if (empty($cv_ids) && $table !== 'cv') return [];
 
             $this->db->reset_query();
@@ -180,11 +181,12 @@ class Profile_model extends CI_Model
             }
 
             // ==========================================================
-            // PERBAIKAN 1: Menggunakan 'is_visible' = 1
+            // LOGIKA ADMIN: Jika Admin, JANGAN filter is_visible
             // ==========================================================
-            // if table has 'is_visible' and viewer is NOT owner -> filter is_visible = 1
-            if (!$is_owner && $this->db->field_exists('is_visible', $table)) {
-                $this->db->where('is_visible', 1); // <-- DIUBAH DARI is_hidden = 0
+            // if table has 'is_visible' -> filter only if NOT owner AND NOT admin
+            // PERUBAHAN: Tambahkan '!$is_admin' pada kondisi if
+            if (!$is_owner && !$is_admin && $this->db->field_exists('is_visible', $table)) {
+                $this->db->where('is_visible', 1); 
             }
 
             return $this->db->get()->result_array();
@@ -219,7 +221,7 @@ class Profile_model extends CI_Model
             'latest_cv' => $latest_cv,
             'cv_ids'    => $cv_ids,
             'sections'  => $sections,
-            'counts'    => $counts // <-- Menggunakan counts yang baru (bukan dari get_cv_counts_by_user)
+            'counts'    => $counts 
         ];
     }
 

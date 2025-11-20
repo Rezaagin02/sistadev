@@ -54,6 +54,7 @@
 
 // $user sudah dikirim oleh controller
 // $is_owner sudah dikirim oleh controller
+$is_admin = $is_admin ?? false;
 
 // 1. Ambil CV utama
 $cv = $profile['latest_cv'] ?? [];
@@ -78,7 +79,7 @@ $visibility_map = $visibility_map ?? []; // Variabel dari $data['visibility_map'
 
 // === TAMBAHAN FILTER INI ===
 // Jika BUKAN pemilik, kosongkan data section yang disembunyikan
-if (!$is_owner) {
+if (!$is_owner && !$is_admin) {
     // Cek 'cv' (Pekerjaan Saat Ini)
     if ( (int)($visibility_map['cv'] ?? 1) === 0 ) {
         $cv = []; // Kosongkan data 'cv'
@@ -769,12 +770,12 @@ $lampiran_data = $lampiran ?? [];
 // Helper: Cek apakah ada item yang akan ditampilkan
 $has_visible_items = false;
 
-if ($is_owner) {
-    $has_visible_items = true; // Owner selalu bisa lihat (untuk mode edit)
+if ($is_owner || $is_admin) {
+    $has_visible_items = true; // Owner/Admin selalu bisa lihat list (meski status hidden)
 } else {
-    // PERUBAHAN 1: Cek dulu apakah SECTION utama di-hide?
+    // Cek apakah SECTION utama di-hide?
     if ($is_lampiran_visible) { 
-        // Jika Section TAMPIL, baru cek per item
+        // Jika Section TAMPIL, cek per item
         foreach ($lampiran_items as $field_name => $label) {
             $file_exists = !empty($lampiran_data[$field_name] ?? null);
             $is_visible_item = (int)($lampiran_data['is_visible_' . $field_name] ?? 1);
@@ -786,7 +787,7 @@ if ($is_owner) {
             }
         }
     } else {
-        // Jika Section DI-HIDE, maka otomatis tidak ada item visible
+        // Jika Section DI-HIDE, maka dianggap tidak ada item yang boleh tampil
         $has_visible_items = false;
     }
 }
@@ -811,7 +812,7 @@ if ($is_owner) {
         <?php endif; ?>
     </div>
     
-    <div id="lampiran-content" class="profile-section card-body <?= ($is_owner && !$is_lampiran_visible) ? 'd-none' : '' ?>"> 
+    <div id="lampiran-content" class="profile-section card-body"> 
         
         <?php if ($has_visible_items): ?>
             <div class="list-group list-group-flush">
@@ -827,8 +828,8 @@ if ($is_owner) {
                     
                     <?php 
                     // Filter Pengunjung
-                    if (!$is_owner && !$file_exists) continue; 
-                    if (!$is_owner && !$is_visible) continue; 
+                    if (!$is_owner && !$is_admin && !$file_exists) continue; 
+                    if (!$is_owner && !$is_admin && !$is_visible) continue; 
                     ?>
 
                     <div class="list-group-item d-flex justify-content-between align-items-center px-0">

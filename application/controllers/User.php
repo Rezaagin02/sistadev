@@ -1624,7 +1624,6 @@ class User extends MY_Controller
         $this->load->model('Profile_model');
         
         // Ambil data user
-        // Asumsi: Model User_model sudah di-load/autoload
         $user = $this->User_model->getById($id); 
         if (!$user) {
             show_error('User tidak ditemukan', 404);
@@ -1632,12 +1631,16 @@ class User extends MY_Controller
         }
         
         // =========================================================
-        // BLOK BARU & PERBAIKAN
+        // LOGIKA ROLE ADMIN (BARU)
         // =========================================================
         
         $is_owner = ($session_user_id === $id);
+        
+        // Cek Role ID dari session (Sesuaikan '1' dengan ID role admin di database Anda)
+        $role_id  = (int)$this->session->userdata('role_id'); 
+        $is_admin = ($role_id === 1); // True jika Admin
 
-        // 1. Ambil Visibility Map (Visibilitas per Bagian Utama CV)
+        // 1. Ambil Visibility Map
         $visibility_rows = $this->db
             ->get_where('user_visibility', ['user_id' => $id])
             ->result_array();
@@ -1647,30 +1650,27 @@ class User extends MY_Controller
             $visibility_map[$row['section']] = (int)$row['is_visible'];
         }
 
-        // 2. Ambil Profil Lengkap (sections)
-        $profile = $this->Profile_model->get_profile_for_viewer($id, $session_user_id);
+        // 2. Ambil Profil Lengkap
+        // PERUBAHAN: Kita kirim parameter $is_admin ke Model agar model mengambil data hidden
+        $profile = $this->Profile_model->get_profile_for_viewer($id, $session_user_id, $is_admin);
         
-        // 3. Ambil Data Lampiran (Satu Baris, Termasuk Status Visibilitas Per Item)
-        // Memanggil fungsi baru di Profile_model
+        // 3. Ambil Data Lampiran
         $lampiran = $this->Profile_model->get_lampiran_by_user_id($id); 
         if (!$lampiran) {
-            $lampiran = []; // Pastikan ini array kosong jika tidak ada data
+            $lampiran = []; 
         }
 
-        // 4. Definisikan Array Data Sekali Saja
+        // 4. Kirim Data ke View
         $data = [
             'title'          => 'Profil',
             'user'           => $user,
             'profile'        => $profile,
             'is_owner'       => $is_owner,
+            'is_admin'       => $is_admin, // <-- KIRIM VARIABEL INI KE VIEW
             'visibility_map' => $visibility_map,
-            'lampiran'       => $lampiran, // <-- DATA LAMPIRAN YANG AKAN DIPAKAI DI VIEW
+            'lampiran'       => $lampiran, 
         ];
         
-        // =========================================================
-        // AKHIR BLOK BARU & PERBAIKAN
-        // =========================================================
-
         $this->load->view('templates/header', $data);
         $this->load->view('templates/topbar', $data);
         $this->load->view('user/profile_view', $data);
